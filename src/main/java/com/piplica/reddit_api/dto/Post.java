@@ -11,5 +11,10 @@ public class Post {
     String id;
     String title;
     int rank;
-    String link;
+    String url;
+    String permalinkUrl;
+    String author;
+    int score;
+    int commentsCount;
+    String subreddit;
 }

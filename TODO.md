@@ -9,8 +9,8 @@ Post: An individual reddit post data
 * id: string
 * rank: number
 * title: string
-* link: string
+* url: string
 * author: string
-* likes: int
+* score: int
 * comments: int
 * subreddit: string
