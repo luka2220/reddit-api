@@ -29,6 +29,7 @@ public class PopularController {
         this.postService = postService;
         this.countryCodeService = countryCodeService;
         this.page = browserCtx.newPage();
+        System.out.println("Connected to reddit!");
     }
 
     @GetMapping()
@@ -50,8 +51,20 @@ public class PopularController {
             return new ResponseEntity<>(errorMessage, HttpStatus.BAD_REQUEST);
         }
 
-        page.navigate("https://old.reddit.com/r/popular/?geo_filter=" + countryCodeSearch);
+        this.page.navigate("https://old.reddit.com/r/popular/?geo_filter=" + countryCodeSearch);
         return new ResponseEntity<>(scrapePage(numPosts), HttpStatus.OK);
+    }
+
+    @GetMapping("/test")
+    ResponseEntity<Map<String, String>> testBrightData() {
+        Map<String, String> response = new HashMap<>();
+        this.page.navigate("https://old.reddit.com");
+        var pageContent = this.page.content();
+
+        System.out.println("Page content: " + pageContent);
+        response.put("message", pageContent);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     private ArrayList<Post> scrapePage(int numPosts) {

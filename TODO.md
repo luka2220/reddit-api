@@ -1,5 +1,7 @@
 ## Task List
 
+* HIGH: Get bright data integrated with application code.
+
 * Work on returning a custom amount of posts for /popular
 * Design a way to continuously render the next page for however many posts requested
 
