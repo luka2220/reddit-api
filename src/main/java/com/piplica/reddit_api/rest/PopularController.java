@@ -3,6 +3,7 @@ package com.piplica.reddit_api.rest;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
+import com.piplica.reddit_api.dto.Post;
 import com.piplica.reddit_api.service.CountryCodeService;
 import com.piplica.reddit_api.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
+import java.util.*;
 
 @RestController
 @RequestMapping(path = "/popular", produces = "application/json")
@@ -28,32 +29,45 @@ public class PopularController {
         this.postService = postService;
         this.countryCodeService = countryCodeService;
         this.page = browserCtx.newPage();
-        // this.page.navigate(redditBaseURL);
     }
 
     @GetMapping()
-    ResponseEntity<?> baseURL(@RequestParam(required = false) String countryCode) {
-        StringBuilder url = new StringBuilder("https://old.reddit.com/r/popular/?geo_filter=");
+    ResponseEntity<?> baseURL(@RequestParam(required = false) String countryCode, @RequestParam(required = false, defaultValue = "25") int numPosts) {
+        final Set<Integer> validPostAmounts = new HashSet<>(Arrays.asList(25, 50, 75, 100));
         var countryCodeSearch = (countryCode == null) ? "GLOBAL" : countryCode;
-
-        if (countryCodeSearch.equals("GLOBAL")) {
-            url.append(countryCodeSearch);
-            page.navigate(url.toString());
-            var listings = page.locator("[data-context='listing']");
-            return new ResponseEntity<>(postService.scrapePostData(listings), HttpStatus.OK);
-        }
 
         if (!countryCodeService.isValidCountryCode(countryCodeSearch)) {
             // 400 Bad Request invalid country code;
-            System.out.println("Invalid country code: " + countryCodeSearch);
-            HashMap<String, String> message = new HashMap<>();
-            message.put("error", "Invalid country code requests, or an unavailable country was requested");
-            return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+            HashMap<String, String> errorMessage = new HashMap<>();
+            errorMessage.put("error", "Invalid country code requests, or an unavailable country was requested: " + countryCodeSearch);
+            return new ResponseEntity<>(errorMessage, HttpStatus.BAD_REQUEST);
         }
 
-        url.append(countryCodeSearch);
-        page.navigate(url.toString());
-        var listings = page.locator("[data-context='listing']");
-        return new ResponseEntity<>(postService.scrapePostData(listings), HttpStatus.OK);
+        if (!validPostAmounts.contains(numPosts)) {
+            // 400 Bad Request invalid post's amount requested;
+            HashMap<String, String> errorMessage = new HashMap<>();
+            errorMessage.put("error", "Invalid post amount sent. Can only be the values: 25, 50, 75, 100");
+            return new ResponseEntity<>(errorMessage, HttpStatus.BAD_REQUEST);
+        }
+
+        page.navigate("https://old.reddit.com/r/popular/?geo_filter=" + countryCodeSearch);
+        return new ResponseEntity<>(scrapePage(numPosts), HttpStatus.OK);
+    }
+
+    private ArrayList<Post> scrapePage(int numPosts) {
+        ArrayList<Post> posts = new ArrayList<>();
+        var numPages = numPosts / 25;
+
+        for (int i = 0; i < numPages; i++) {
+            var listings = page.locator("[data-context='listing']");
+            posts.addAll(postService.scrapePostData(listings));
+
+            // Navigate to next page for posts
+            var nextPage = page.locator(".next-button");
+            var nextPageLink = nextPage.locator(":scope a[rel='nofollow next']").getAttribute("href");
+            page.navigate(nextPageLink);
+        }
+
+        return posts;
     }
 }

@@ -8,6 +8,7 @@ import java.util.Set;
 @Service
 public class CountryCodeService {
     private final Map<String, String> ALLOWED_COUNTRIES = Map.ofEntries(
+            Map.entry("GLOBAL", "Everywhere"),
             Map.entry("US", "United States"),
             Map.entry("AR", "Argentina"),
             Map.entry("AU", "Australia"),
