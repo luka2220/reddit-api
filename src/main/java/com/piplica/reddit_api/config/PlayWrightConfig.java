@@ -21,14 +21,16 @@ public class PlayWrightConfig {
     @Bean
     Browser playWright() {
         playwright = Playwright.create();
-        String BRIGHT_DATA_PROXY = "wss://" + BRIGHT_DATA_USERNAME + ":" + BRIGHT_DATA_PASSWORD + "@brd.superproxy.io:9222";
-
-        // NOTE: Bright data websocket browser
-//        return playwright.chromium().connectOverCDP(BRIGHT_DATA_PROXY);
 
         return playwright.chromium().launch(new BrowserType.LaunchOptions()
                 .setHeadless(false)
                 .setArgs(List.of("--disable-images", "--disable-extensions", "--blink-settings=imagesEnabled=false")));
+    }
+
+    private Browser brightDataScrappingBrowser() {
+        String BRIGHT_DATA_PROXY = "wss://" + BRIGHT_DATA_USERNAME + ":" + BRIGHT_DATA_PASSWORD + "@brd.superproxy.io:9222";
+        // NOTE: Bright data websocket browser
+        return playwright.chromium().connectOverCDP(BRIGHT_DATA_PROXY);
     }
 
     @PreDestroy

@@ -1,6 +1,7 @@
 package com.piplica.reddit_api.service;
 
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
 import com.piplica.reddit_api.dto.Post;
 import org.springframework.stereotype.Service;
 
@@ -9,7 +10,24 @@ import java.util.ArrayList;
 @Service
 public class PostService {
 
-    public ArrayList<Post> scrapePostData(Locator listings) {
+    public ArrayList<Post> scrapePage(Page page, int numPosts) {
+        ArrayList<Post> posts = new ArrayList<>();
+        var numPages = numPosts / 25;
+
+        for (int i = 0; i < numPages; i++) {
+            var listings = page.locator("[data-context='listing']");
+            posts.addAll(this.scrapePostData(listings));
+
+            // Navigate to next page for posts
+            var nextPage = page.locator(".next-button");
+            var nextPageLink = nextPage.locator(":scope a[rel='nofollow next']").getAttribute("href");
+            page.navigate(nextPageLink);
+        }
+
+        return posts;
+    }
+
+    private ArrayList<Post> scrapePostData(Locator listings) {
         ArrayList<Post> posts = new ArrayList<>();
 
         for (Locator listing : listings.all()) {

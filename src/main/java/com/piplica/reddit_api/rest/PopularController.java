@@ -3,7 +3,6 @@ package com.piplica.reddit_api.rest;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
-import com.piplica.reddit_api.dto.Post;
 import com.piplica.reddit_api.service.CountryCodeService;
 import com.piplica.reddit_api.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +51,8 @@ public class PopularController {
         }
 
         this.page.navigate("https://old.reddit.com/r/popular/?geo_filter=" + countryCodeSearch);
-        return new ResponseEntity<>(scrapePage(numPosts), HttpStatus.OK);
+
+        return new ResponseEntity<>(postService.scrapePage(this.page, numPosts), HttpStatus.OK);
     }
 
     @GetMapping("/test")
@@ -65,22 +65,5 @@ public class PopularController {
         response.put("message", pageContent);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    private ArrayList<Post> scrapePage(int numPosts) {
-        ArrayList<Post> posts = new ArrayList<>();
-        var numPages = numPosts / 25;
-
-        for (int i = 0; i < numPages; i++) {
-            var listings = page.locator("[data-context='listing']");
-            posts.addAll(postService.scrapePostData(listings));
-
-            // Navigate to next page for posts
-            var nextPage = page.locator(".next-button");
-            var nextPageLink = nextPage.locator(":scope a[rel='nofollow next']").getAttribute("href");
-            page.navigate(nextPageLink);
-        }
-
-        return posts;
     }
 }
